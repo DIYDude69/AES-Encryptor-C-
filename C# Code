@@ -1,0 +1,67 @@
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+
+
+
+namespace AES_Encryption
+{
+  class AES_Encryption
+  {
+    public static void Main(String[] args)
+    {
+      Console.WriteLine("Enter the text to encrypt:");
+      string input = Console.ReadLine();
+
+      using (Aes aes = Aes.Create())
+      {
+        aes.GenerateKey();
+        aes.GenerateIV();
+
+        byte [] encrypted = EncryptStringToBytes_Aes(input, aes.Key, aes.IV);
+
+        string encryptedBase64 = Convert.ToBase64String(encrypted);
+
+        Console.WriteLine($"Encrypted text (Base64): {encryptedBase64}");
+        Console.WriteLine($"AES Key (Base 64): {Convert.ToBase64String(aes.Key)}");
+        Console.WriteLine($"AES IV (Base64): {Convert.ToBase64String(aes.IV)}");
+      }
+    }
+
+    static byte[] EncryptStringToBytes_Aes(string plainText, byte[] Key, byte[] IV)
+    {
+      if (plainText == null || plainText.Length <= 0)
+      throw new ArgumentNullException (nameof(plainText));
+
+      if (Key == null || Key.Length <= 0)
+      throw new ArgumentNullException (nameof(Key));
+
+      if (IV == null || IV.Length <=0)
+      throw new ArgumentNullException (nameof(IV));
+
+      byte[] encrypted;
+
+      using (Aes aesAlg = Aes.Create())
+      {
+        aesAlg.Key = Key;
+        aesAlg.IV = IV;
+
+        ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+
+        using (MemoryStream msEncrypt = new MemoryStream())
+        {
+          using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+          {
+            using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+            {
+              swEncrypt.Write(plainText);
+            }
+            encrypted = msEncrypt.ToArray();
+          }
+        }
+      }
+      return encrypted;
+    }
+  }
+}
